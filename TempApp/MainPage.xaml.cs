@@ -37,20 +37,34 @@ namespace TempApp
             TEMP.Dispose();
         }
 
+        /// <summary>
+        /// I2Cの初期処理
+        /// </summary>
         private async void InitI2C()
         {
+            // I2Cコントローラのオブジェクトを取得するための文字列をセット
             string aqs = I2cDevice.GetDeviceSelector();
+
+            // デバイスに登録されているすべての周辺機器を列挙する
             var dis = await DeviceInformation.FindAllAsync(aqs);
 
+            // I2Cコントローラが見つからない場合はエラーを返す
             if (dis.Count == 0)
             {
                 Text_Status.Text = "No I2C controllers were found on the system";
                 return;
             }
 
+            // I2Cの接続設定を管理するオブジェクトの作成
             var settings = new I2cConnectionSettings(TEMP_I2C_ADDR);
+
+            // 通信速度の設定
             settings.BusSpeed = I2cBusSpeed.FastMode;
+
+            // I2Cに接続したデバイスのインスタンスを生成
             TEMP = await I2cDevice.FromIdAsync(dis[0].Id, settings);
+
+            // デバイスが見つからない場合はエラーを返す
             if(TEMP == null)
             {
                 Text_Status.Text = string.Format(
@@ -82,6 +96,12 @@ namespace TempApp
             periodicTimer.Start();
         }
 
+        /// <summary>
+        /// DispatcherTimerオブジェクトperiodicTimerの
+        /// Intervalプロパティに設定した周期に呼ばれるメソッド
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Timer_Tick(object sender, object e)
         {
             double temp = readTemp();
@@ -91,6 +111,11 @@ namespace TempApp
             samplingCount++;
         }
 
+        /// <summary>
+        /// I2cDeviceオブジェクトのWriteReadメソッドを使用し
+        /// 温度センサーから温度を取り出すメソッド
+        /// </summary>
+        /// <returns></returns>
         private double readTemp()
         {
             // Register address to read
